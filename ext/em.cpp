@@ -407,9 +407,6 @@ EventMachine_t::_RunOnce
 
 bool EventMachine_t::_RunOnce()
 {
-  #ifdef BUILD_FOR_RUBY
-  rb_thread_schedule();
-  #endif
 	if (bEpoll)
 		return _RunEpollOnce();
 	else if (bKqueue)

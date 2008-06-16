@@ -58,7 +58,7 @@ if Spec.has_rdoc
   Rake::RDocTask.new do |rd|
     rd.title = Spec.name
     rd.rdoc_dir = 'rdoc'
-    rd.main = "docs/README"
+    rd.main = "docs/README" if test ?e, "docs/README"
     rd.rdoc_files.include("lib/**/*.rb", *Spec.extra_rdoc_files)
   end
   Rake::Task[:clean].enhance [:clobber_rdoc]
@@ -91,6 +91,3 @@ if scm = %w(git svn bzr hg).find { |d| File.directory? ".#{d}" }
   desc "Run tests then commit to #{scm}"
   task :commit => :test do sh "#{scm} commit" end
 end
-
-desc 'Run all tests then install'
-task :default => [:test, :install]

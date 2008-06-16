@@ -11,11 +11,51 @@
 #
 # $Id$
 #++
+
+### OLD RAKE: ###
+# # The tasks and external gemspecs we used to generate binary gems are now
+# # obsolete. Use Patrick Hurley's gembuilder to build binary gems for any
+# # desired platform.
+# # To build a binary gem on Win32, ensure that the include and lib paths
+# # both contain the proper references to OPENSSL. Use the static version
+# # of the libraries, not the dynamic, otherwise we expose the user to a
+# # runtime dependency.
+# 
+# # To build a binary gem for win32, first build rubyeventmachine.so
+# # using VC6 outside of the build tree (the normal way: ruby extconf.rb,
+# # and then nmake). Then copy rubyeventmachine.so into the lib directory,
+# # and run rake gemwin32.
+#
+
 require 'rubygems'  unless defined?(Gem)
 require 'rake'      unless defined?(Rake)
 require 'rake/gempackagetask'
 
 Package = true # Build zips and tarballs?
+Dir.glob('tasks/*.rake').each { |r| Rake.application.add_import r }
+
+# e.g. rake EM_JAVA=true for forcing java build tasks as defaults!
+Java = ENV['EM_JAVA'] || RUBY_PLATFORM =~ /java/
+
+# The default task is invoked by rubygems during install, change with caution.
+desc "Build suitable for run & gem install."
+task :default => [:build]
+
+desc "Build extension and place in lib"
+task :build => (Java ? 'java:build' : 'ext:build') do |t|
+  Dir.glob('{ext,java/src}/*.{so,bundle,dll,jar}').each do |f|
+    mv f, "lib"
+  end
+end
+
+# Basic clean definition, this is enhanced by imports aswell.
+task :clean do
+  chdir 'ext' do
+    sh 'make clean' if test ?e, 'Makefile'
+  end
+  Dir.glob('**/Makefile').each { |file| rm file }
+  Dir.glob('**/*.{o,so,bundle,class,jar,dll,log}').each { |file| rm file }
+end
 
 Spec = Gem::Specification.new do |s|
   s.name              = "eventmachine"
@@ -23,20 +63,15 @@ Spec = Gem::Specification.new do |s|
   s.platform          = Gem::Platform::RUBY
 
   s.has_rdoc          = true
-  s.rdoc_options      = %w(--title EventMachine --main README --line-numbers)
-  s.extra_rdoc_files  = %w(
-    README RELEASE_NOTES TODO
-    LIGHTWEIGHT_CONCURRENCY SPAWNED_PROCESSES DEFERRABLES
-    PURE_RUBY EPOLL KEYBOARD SMTP
-    COPYING GNU LEGAL
-  )
+  s.rdoc_options      = %w(--title EventMachine --main docs/README --line-numbers)
+  s.extra_rdoc_files  = Dir['docs/*']
 
-  s.files             = %w(Rakefile) + Dir.glob("{bin,tests,lib,ext,tasks}/**/*")
+  s.files             = %w(Rakefile) + Dir["{bin,tests,lib,ext,java,tasks}/**/*"]
 
   s.require_path      = 'lib'
 
   s.test_file         = "tests/testem.rb"
-  s.extensions        = "ext/extconf.rb"
+  s.extensions        = "Rakefile"
 
   s.author            = "Francis Cianfrocca"
   s.email             = "garbagecat10@gmail.com"
@@ -60,75 +95,48 @@ using TCP/IP, especially if custom protocols are required.
 
   require 'lib/eventmachine_version'
   s.version = EventMachine::VERSION
-  # s.requirements << 'Java' # TODO
 end
 
-Dir.glob('tasks/*.rake').each { |r| Rake.application.add_import r }
+namespace :ext do
+  desc "Build C++ extension"
+  task :build => [:clean, :make]
+  
+  desc "make extension"
+  task :make => [:makefile] do
+    chdir 'ext' do
+      sh 'make'
+    end
+  end
 
-desc "Compile the extension."
-task :build do |t|
-  mkdir "nonversioned" unless File.directory?("nonversioned")
-  chdir("nonversioned") do
-    system "ruby ../ext/extconf.rb"
-    system "make clean"
-    system "make"
-    Dir.glob('*.{so,bundle,dll,jar}').each do |f|
-      cp f, "../lib"
+  desc 'Compile the makefile'
+  task :makefile do |t|
+    chdir 'ext' do
+      ruby 'extconf.rb'
     end
   end
 end
-
-# Basic clean definition, this is enhanced by imports aswell.
-task :clean do
-  Dir.glob('lib/*.{so,bundle,jar,dll}').each { |file| rm file }
-  rm_rf 'nonversioned'
-  Dir.glob('java/**/*.{class,jar}').each { |file| rm file }
-end
-
-### OLD RAKE: ###
-# # The tasks and external gemspecs we used to generate binary gems are now
-# # obsolete. Use Patrick Hurley's gembuilder to build binary gems for any
-# # desired platform.
-# # To build a binary gem on Win32, ensure that the include and lib paths
-# # both contain the proper references to OPENSSL. Use the static version
-# # of the libraries, not the dynamic, otherwise we expose the user to a
-# # runtime dependency.
-# 
-# =begin
-# # To build a binary gem for win32, first build rubyeventmachine.so
-# # using VC6 outside of the build tree (the normal way: ruby extconf.rb,
-# # and then nmake). Then copy rubyeventmachine.so into the lib directory,
-# # and run rake gemwin32.
-# =end
-# 
-
-
-JSpec = Spec.dup
-JSpec.name = 'eventmachine-java'
-JSpec.extensions = nil
-JSpec.files << 'lib/em_reactor.jar'
-
-Rake::GemPackageTask.new(JSpec) do end
-desc "Build the EventMachine RubyGem for JRuby"
-task :jgem => [:clean, :jar, "pkg/eventmachine-java-#{JSpec.version}.gem"]
-
-namespace :jgem do
-  desc "Build and install the jruby gem"
-  task :install => :jgem do
-    sudo "gem inst pkg/#{JSpec.name}*.gem"
+  
+namespace :java do
+  # This task creates the JRuby JAR file and leaves it in the lib directory.
+  # This step is required before executing the jgem task.
+  desc "Build java extension"
+  task :build => [:jar] do |t|
+    chdir('java/src') do
+      mv 'em_reactor.jar', '../../lib/em_reactor.jar'
+    end
+  end
+  
+  desc "compile .java to .class"
+  task :compile do
+    chdir('java/src') do
+      sh 'javac com/rubyeventmachine/*.java'
+    end
+  end
+  
+  desc "compile .classes to .jar"
+  task :jar => [:compile] do
+    chdir('java/src') do
+      sh "jar -cf em_reactor.jar com/rubyeventmachine/*.class"
+    end
   end
 end
-
-
-# This task creates the JRuby JAR file and leaves it in the lib directory.
-# This step is required before executing the jgem task.
-desc "Compile the JAR"
-task :jar do |t|
-  chdir('java/src') do
-    sh 'javac com/rubyeventmachine/*.java'
-    sh "jar -cf em_reactor.jar com/rubyeventmachine/*.class"
-    mv 'em_reactor.jar', '../../lib/em_reactor.jar'
-  end
-end
-
-# The idea for using Rakefile instead of extconf: task :default => [RUBY_PLATFORM == 'java' ? :jar : :extension]

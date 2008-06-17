@@ -35,14 +35,14 @@ Package = true # Build zips and tarballs?
 Dir.glob('tasks/*.rake').each { |r| Rake.application.add_import r }
 
 # e.g. rake EM_JAVA=true for forcing java build tasks as defaults!
-Java = ENV['EM_JAVA'] || RUBY_PLATFORM =~ /java/
+java = ENV['EM_JAVA'] || RUBY_PLATFORM =~ /java/
 
 # The default task is invoked by rubygems during install, change with caution.
 desc "Build suitable for run & gem install."
 task :default => [:build]
 
 desc "Build extension and place in lib"
-task :build => (Java ? 'java:build' : 'ext:build') do |t|
+task :build => (java ? 'java:build' : 'ext:build') do |t|
   Dir.glob('{ext,java/src}/*.{so,bundle,dll,jar}').each do |f|
     mv f, "lib"
   end

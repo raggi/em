@@ -29,6 +29,9 @@ end
 require 'mkmf'
 
 flags = ['-D BUILD_FOR_RUBY']
+if have_func('rb_thread_blocking_region') and have_macro('RB_UBF_DFL', 'ruby.h')
+  flags << "-DHAVE_TBR"
+end
 
 # Minor platform details between *nix and Windows:
 
@@ -97,10 +100,6 @@ when /linux/
 	  (e = system( "gcc hasEpollTest.c -o hasEpollTest " )) and (e = $?.to_i)
 	  `rm -f hasEpollTest.c hasEpollTest`
 	  flags << '-DHAVE_EPOLL' if e == 0
-  end
-
-  if have_func('rb_thread_blocking_region') and have_macro('RB_UBF_DFL', 'ruby.h')
-	  flags << "-DHAVE_TBR"
   end
 
   # on Unix we need a g++ link, not gcc.

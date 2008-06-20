@@ -28,7 +28,7 @@
 # For C++ EventMachines, the analogous functionality is found in ext/rubymain.cpp,
 # which is a garden-variety Ruby-extension glue module.
 
-
+require 'java'
 require 'em_reactor'
 
 module EventMachine

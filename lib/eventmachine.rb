@@ -41,36 +41,32 @@
 # string be set in order to select the pure-Ruby version.
 #
 
-=begin
-$eventmachine_library ||= nil
+
+$eventmachine_library ||= ENV['EVENTMACHINE_LIBRARY'] || :cascade
+$eventmachine_library = $eventmachine_library.to_sym
+
 case $eventmachine_library
 when :pure_ruby
   require 'pr_eventmachine'
 when :extension
   require 'rubyeventmachine'
-else
+when :java
+  require 'jeventmachine'
+else # :cascade
   # This is the case that most user code will take.
   # Prefer the extension if available.
   begin
-    require 'rubyeventmachine'
+    if RUBY_PLATFORM =~ /java/
+      require 'java'
+      require 'jeventmachine'
+    else
+      require 'rubyeventmachine'
+    end
   rescue LoadError
+    warn "# EventMachine fell back to pure ruby mode" if $DEBUG
     require 'pr_eventmachine'
   end
 end
-=end
-
-
-if RUBY_PLATFORM =~ /java/
-	require 'java'
-	require 'jeventmachine'
-else
-	if $eventmachine_library == :pure_ruby or ENV['EVENTMACHINE_LIBRARY'] == "pure_ruby"
-		require 'pr_eventmachine'
-	else
-		require 'rubyeventmachine'
-	end
-end
-
 
 require "eventmachine_version"
 require 'em/deferrable'

@@ -36,6 +36,7 @@ Dir.glob('tasks/*.rake').each { |r| Rake.application.add_import r }
 
 # e.g. rake EM_JAVA=true for forcing java build tasks as defaults!
 java = ENV['EM_JAVA'] || RUBY_PLATFORM =~ /java/
+$eventmachine_library = :java if java
 
 # If running under rubygems...
 __DIR__ ||= File.expand_path(File.dirname(__FILE__))

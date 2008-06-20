@@ -40,7 +40,8 @@ end
 namespace :test do
   desc "Run tests for #{Spec.name}."
   task :partial do |t|
-    run_tests t, :extension, [
+    lib = RUBY_PLATFORM =~ /java/ ? :java : :extension
+    run_tests t, lib, [
       "test_basic.rb",
       "test_epoll.rb",
       "test_errors.rb",
@@ -66,6 +67,11 @@ namespace :test do
       "test_timers.rb",
       "test_ud.rb",
     ]
+  end
+  
+  desc "Run java tests for #$name."
+  task :testjava do |t|
+    run_tests t, :java
   end
 
   desc "Run pure-ruby tests for #$name."
@@ -184,6 +190,6 @@ namespace :test do
 
   desc "Test SASL"
   task :sasl do |t|
-    run_tests t, :extension, "test_sasl*.rb"
+    run_tests t, :java, "test_sasl*.rb"
   end
 end

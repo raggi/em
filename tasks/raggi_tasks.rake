@@ -27,8 +27,20 @@ module FileUtils
   # Hopefully they'll do something semantically similar.
   abort "Err: #{__FILE__}:#{__LINE__} monkey patch windows? clobbers!" unless instance_methods.grep(/windows\?/).empty?
   abort "Err: #{__FILE__}:#{__LINE__} monkey patch sudo clobbers!" unless instance_methods.grep(/sudo/).empty?
+  abort "Err: #{__FILE__}:#{__LINE__} monkey patch gem_cmd clobbers!" unless instance_methods.grep(/gem_cmd/).empty?
   def windows?; RUBY_PLATFORM =~ /mswin|mingw/; end
-  def sudo(cmd); sh(windows? ? cmd : "sudo #{cmd}"); end
+  def sudo(cmd)
+    if windows? || (require 'etc'; Etc.getpwuid.uid == 0)
+      sh cmd
+    else
+      sh "sudo #{cmd}"
+    end
+  end
+  def gem_cmd(action, name, *args)
+    rb = Gem.ruby rescue nil
+    rb ||= (require 'rbconfig'; File.join(Config::CONFIG['bindir'], Config::CONFIG['ruby_install_name']))
+    sudo "#{rb} -r rubygems -e 'require %{rubygems/gem_runner}; Gem::GemRunner.new.run(%w{#{action} #{name} #{args.join(' ')}})'"
+  end
 end
 
 
@@ -66,8 +78,8 @@ if Spec.has_rdoc
   desc 'Generate and open documentation'
   task :docs => :rdoc do
     case RUBY_PLATFORM
-    when /darwin/       : sh 'open rdoc/index.html'
-    when /mswin|mingw/  : sh 'start rdoc\index.html'
+    when /darwin/       ; sh 'open rdoc/index.html'
+    when /mswin|mingw/  ; sh 'start rdoc\index.html'
     else 
       sh 'firefox rdoc/index.html'
     end
@@ -79,11 +91,17 @@ if Spec.default_executable
   task :run do ruby File.join(Spec.bindir, Spec.default_executable) end
 end
 
+require 'rubygems'
+
 desc 'Install gem (and sudo if required)'
-task :install => :package do sudo %{gem i pkg/#{Spec.name}-#{Spec.version}} end
+task :install => :package do 
+  gem_cmd(:install, "pkg/#{Spec.name}-#{Spec.version}.gem")
+end
 
 desc 'Uninstall gem (and sudo if required)'
-task :uninstall do sudo %{gem unin #{Spec.name} -v="#{Spec.version}"} end
+task :uninstall do
+  gem_cmd(:uninstall, "#{Spec.name}", "-v=#{Spec.version}")
+end
 
 # Find an scm's store directory, if we do, make a task to commit to it only
 # after running all the tests (successfully).

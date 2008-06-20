@@ -129,11 +129,11 @@ OPENSSL_LIBS_HEADS_PLATFORMS = {
 dc_flags = ['ssl']
 dc_flags += ["#{ENV['OPENSSL']}/include", ENV['OPENSSL']] if /linux/ =~ RUBY_PLATFORM
 libs, heads = case RUBY_PLATFORM
-when /mswin/    : OPENSSL_LIBS_HEADS_PLATFORMS[:mswin]
-when /mingw/    : OPENSSL_LIBS_HEADS_PLATFORMS[:unix]
-when /darwin/   : OPENSSL_LIBS_HEADS_PLATFORMS[:darwin]
-when /openbsd/  : OPENSSL_LIBS_HEADS_PLATFORMS[:crypto_hack]
-when /linux/    : OPENSSL_LIBS_HEADS_PLATFORMS[:crypto_hack]
+when /mswin/    ; OPENSSL_LIBS_HEADS_PLATFORMS[:mswin]
+when /mingw/    ; OPENSSL_LIBS_HEADS_PLATFORMS[:unix]
+when /darwin/   ; OPENSSL_LIBS_HEADS_PLATFORMS[:darwin]
+when /openbsd/  ; OPENSSL_LIBS_HEADS_PLATFORMS[:crypto_hack]
+when /linux/    ; OPENSSL_LIBS_HEADS_PLATFORMS[:crypto_hack]
 else              OPENSSL_LIBS_HEADS_PLATFORMS[:unix]
 end
 dir_config(*dc_flags)

@@ -31,7 +31,7 @@ require 'rubygems'  unless defined?(Gem)
 require 'rake'      unless defined?(Rake)
 require 'rake/gempackagetask'
 
-Package = true # Build zips and tarballs?
+Package = false # Build zips and tarballs?
 Dir.glob('tasks/*.rake').each { |r| Rake.application.add_import r }
 
 # e.g. rake EM_JAVA=true for forcing java build tasks as defaults!

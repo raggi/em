@@ -37,9 +37,17 @@ Dir.glob('tasks/*.rake').each { |r| Rake.application.add_import r }
 # e.g. rake EM_JAVA=true for forcing java build tasks as defaults!
 java = ENV['EM_JAVA'] || RUBY_PLATFORM =~ /java/
 
-# The default task is invoked by rubygems during install, change with caution.
-desc "Build suitable for run & gem install."
-task :default => [:build]
+# If running under rubygems...
+__DIR__ ||= File.expand_path(File.dirname(__FILE__))
+if Gem.path.any? {|path| %r(^#{Regexp.escape path}) =~ __DIR__}
+  task :default => :gem_build
+else
+  desc "Run tests."
+  task :default => 'test:partial'
+end
+
+desc ":default build when running under rubygems."
+task :gem_build => :build
 
 desc "Build extension and place in lib"
 task :build => (java ? 'java:build' : 'ext:build') do |t|

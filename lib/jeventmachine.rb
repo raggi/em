@@ -75,6 +75,10 @@ module EventMachine
 	def self.stop_tcp_server sig
 		@em.stopTcpServer sig
 	end
+	def self.start_unix_server filename
+		# TEMPORARILY unsupported until someone figures out how to do it.
+		raise "unsupported on this platform"
+	end
 	def self.send_data sig, data, length
 		@em.sendData sig, data, length
 	end
@@ -86,6 +90,9 @@ module EventMachine
 	end
 	def self.close_connection sig, after_writing
 		@em.closeConnection sig, after_writing
+	end
+	def self.set_comm_inactivity_timeout sig, interval
+		@em.setCommInactivityTimeout sig, interval
 	end
 	def self.start_tls sig
 		@em.startTls sig
@@ -105,6 +112,17 @@ module EventMachine
 	end
 	def self.open_udp_socket server, port
 		@em.openUdpSocket server, port
+	end
+	def self.invoke_popen cmd
+		# TEMPORARILY unsupported until someone figures out how to do it.
+		raise "unsupported on this platform"
+	end
+	def self.read_keyboard
+		# TEMPORARILY unsupported until someone figures out how to do it.
+		raise "temporarily unsupported on this platform"
+	end
+	def self.set_max_timer_count num
+		# harmless no-op in Java. There's no built-in timer limit.
 	end
 	def self.library_type
 		:java

@@ -631,6 +631,7 @@ SelectData_t::SelectData_t()
 }
 
 
+#ifdef BUILD_FOR_RUBY
 /*****************
 _SelectDataSelect
 *****************/
@@ -641,6 +642,7 @@ static VALUE _SelectDataSelect (void *v)
 	sd->nSockets = select (sd->maxsocket+1, &(sd->fdreads), &(sd->fdwrites), NULL, &(sd->tv));
 	return Qnil;
 }
+#endif
 
 /*********************
 SelectData_t::_Select

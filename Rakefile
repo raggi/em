@@ -34,9 +34,9 @@ require 'rake/gempackagetask'
 Package = false # Build zips and tarballs?
 Dir.glob('tasks/*.rake').each { |r| Rake.application.add_import r }
 
-# e.g. rake EM_JAVA=true for forcing java build tasks as defaults!
-java = ENV['EM_JAVA'] || RUBY_PLATFORM =~ /java/
-$eventmachine_library = :java if java
+# e.g. rake EVENTMACHINE_LIBRARY=java for forcing java build tasks as defaults!
+$eventmachine_library = :java if RUBY_PLATFORM =~ /java/ || ENV['EVENTMACHINE_LIBRARY'] == 'java'
+$eventmachine_library = :pure_ruby if ENV['EVENTMACHINE_LIBRARY'] == 'pure_ruby'
 
 # If running under rubygems...
 __DIR__ ||= File.expand_path(File.dirname(__FILE__))
@@ -50,12 +50,17 @@ end
 desc ":default build when running under rubygems."
 task :gem_build => :build
 
-desc "Build extension and place in lib"
-task :build => (java ? 'java:build' : 'ext:build') do |t|
+desc "Build extension (or EVENTMACHIINE_LIBRARY) and place in lib"
+build_task = 'ext:build'
+build_task = 'java:build' if $eventmachine_library == :java
+build_task = :dummy_build if $eventmachine_library == :pure_ruby
+task :build => build_task do |t|
   Dir.glob('{ext,java/src}/*.{so,bundle,dll,jar}').each do |f|
     mv f, "lib"
   end
 end
+
+task :dummy_build
 
 # Basic clean definition, this is enhanced by imports aswell.
 task :clean do

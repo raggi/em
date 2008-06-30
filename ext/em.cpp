@@ -1177,7 +1177,9 @@ struct sockaddr *name2address (const char *server, int port, int *family, int *b
 	// Return NULL if no resolution.
 
 	static struct sockaddr_in in4;
+	#ifdef OS_UNIX
 	static struct sockaddr_in6 in6;
+	#endif
 	struct hostent *hp;
 
 	if (!server || !*server)

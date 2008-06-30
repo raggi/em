@@ -42,7 +42,9 @@
 #
 
 
-$eventmachine_library ||= ENV['EVENTMACHINE_LIBRARY'] || :cascade
+unless defined?($eventmachine_library)
+  $eventmachine_library = ENV['EVENTMACHINE_LIBRARY'] || :cascade
+end
 $eventmachine_library = $eventmachine_library.to_sym
 
 case $eventmachine_library
@@ -59,12 +61,15 @@ else # :cascade
     if RUBY_PLATFORM =~ /java/
       require 'java'
       require 'jeventmachine'
+      $eventmachine_library = :java
     else
       require 'rubyeventmachine'
+      $eventmachine_library = :extension
     end
   rescue LoadError
     warn "# EventMachine fell back to pure ruby mode" if $DEBUG
     require 'pr_eventmachine'
+    $eventmachine_library = :pure_ruby
   end
 end
 
@@ -1238,10 +1243,10 @@ class Connection
   # Override .new so subclasses don't have to call super and can ignore
   # connection-specific arguments
   #
-  def self.new sig, *args #:nodoc:
+  def self.new(sig, *args) #:nodoc:
     allocate.instance_eval do
       # Call a superclass's #initialize if it has one
-      initialize *args
+      initialize(*args)
 
       # Store signature and run #post_init
       @signature = sig

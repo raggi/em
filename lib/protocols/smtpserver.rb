@@ -289,8 +289,8 @@ module Protocols
 				d = receive_data_command
 
 				if d.respond_to?(:callback)
-					d.callback &succeeded
-					d.errback &failed
+					d.callback(&succeeded)
+					d.errback(&failed)
 				else
 					(d ? succeeded : failed).call
 				end
@@ -383,8 +383,8 @@ module Protocols
 				d = receive_recipient rcpt
 
 				if d.respond_to?(:set_deferred_status)
-					d.callback &succeeded
-					d.errback &failed
+					d.callback(&succeeded)
+					d.errback(&failed)
 				else
 					(d ? succeeded : failed).call
 				end
@@ -433,8 +433,8 @@ module Protocols
 				d = receive_message
 
 				if d.respond_to?(:set_deferred_status)
-					d.callback &succeeded
-					d.errback &failed
+					d.callback(&succeeded)
+					d.errback(&failed)
 				else
 					(d ? succeeded : failed).call
 				end

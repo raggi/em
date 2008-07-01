@@ -1601,33 +1601,27 @@ end
 module Protocols
 	# In this module, we define standard protocol implementations.
 	# They get included from separate source files.
+	
+	# TODO / XXX: We're munging the LOAD_PATH!
+	# A good citizen would use eventmachine/protocols/tcptest.
+	# TODO : various autotools are completely useless with the lack of naming
+	# convention, we need to correct that!
+	autoload :TcpConnectTester, 'protocols/tcptest'
+	autoload :HttpClient, 'protocols/httpclient'
+	autoload :LineAndTextProtocol, 'protocols/line_and_text'
+	autoload :HeaderAndContentProtocol, 'protocols/header_and_content'
+	autoload :LineText2, 'protocols/linetext2'
+	autoload :HttpClient2, 'protocols/httpcli2'
+	autoload :Stomp, 'protocols/stomp'
+	autoload :SmtpClient, 'protocols/smtpclient'
+	autoload :SmtpServer, 'protocols/smtpserver'
+	autoload :SASLauth, 'protocols/saslauth'
 end
 
 end # module EventMachine
-
-
 
 # Save everyone some typing.
 EM = EventMachine
 EM::P = EventMachine::Protocols
 
-
-# At the bottom of this module, we load up protocol handlers that depend on some
-# of the classes defined here. Eventually we should refactor this out so it's
-# laid out in a more logical way.
-#
-
-require 'protocols/tcptest'
-require 'protocols/httpclient'
-require 'protocols/line_and_text'
-require 'protocols/header_and_content'
-require 'protocols/linetext2'
-require 'protocols/httpcli2'
-require 'protocols/stomp'
-require 'protocols/smtpclient'
-require 'protocols/smtpserver'
-require 'protocols/saslauth'
-
 require 'em/processes'
-
-

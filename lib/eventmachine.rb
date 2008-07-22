@@ -518,7 +518,7 @@ module EventMachine
     begin
       port = Integer(port)
     rescue ArgumentError, TypeError
-      args.unshift handler
+      args.unshift handler if handler
       handler = port
       port = nil
     end if port
@@ -659,7 +659,7 @@ module EventMachine
     begin
       port = Integer(port)
     rescue ArgumentError, TypeError
-      args.unshift handler
+      args.unshift handler if handler
       handler = port
       port = nil
     end if port
@@ -728,8 +728,8 @@ module EventMachine
 	# For making connections to Unix-domain sockets.
 	# Eventually this has to get properly documented and unified with the TCP-connect methods.
 	# Note how nearly identical this is to EventMachine#connect
-	def EventMachine::connect_unix_domain socketname, *args
-	  connect socketname, *args
+	def EventMachine::connect_unix_domain socketname, *args, &blk
+	  connect socketname, *args, &blk
 	end
 
 

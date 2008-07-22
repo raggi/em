@@ -159,6 +159,7 @@ class TestEpoll < Test::Unit::TestCase
 			50.times {
 				EM.connect_unix_domain(fn, TestEchoClient) {$n += 1}
 			}
+			EM::add_timer(1) { $stderr.puts("test_unix_domain timed out!"); EM::stop }
 		}
 		assert_equal(0, $n)
 		assert_equal(50, $max)

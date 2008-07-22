@@ -925,7 +925,7 @@ module EventMachine
 	# way of initializing @threadqueue because EventMachine is a Module, not a Class, and
 	# has no constructor.
 	#
-	def self::defer op, callback = nil
+	def self::defer op = nil, callback = nil, &blk
 		unless @threadqueue
 			require 'thread'
 			@threadqueue = Queue.new
@@ -942,7 +942,7 @@ module EventMachine
 			}
 		end
 
-		@threadqueue << [op,callback]
+		@threadqueue << [op||blk,callback]
 	end
 
 

@@ -655,7 +655,15 @@ module EventMachine
   # to have them behave differently with respect to post_init
   # if at all possible.
   #
-  def EventMachine::connect server, port, handler=nil, *args
+  def EventMachine::connect server, port=nil, handler=nil, *args
+    begin
+      port = Integer(port)
+    rescue ArgumentError, TypeError
+      args.unshift handler
+      handler = port
+      port = nil
+    end if port
+
     klass = if (handler and handler.is_a?(Class))
       handler
     else
@@ -668,7 +676,12 @@ module EventMachine
       raise ArgumentError, "wrong number of arguments for #{klass}#initialize (#{args.size} for #{expected})"
     end
 
-    s = connect_server server, port
+    s = if port
+          connect_server server, port
+        else
+          connect_unix_server server
+        end
+
     c = klass.new s, *args
     @conns[s] = c
     block_given? and yield c
@@ -715,24 +728,8 @@ module EventMachine
 	# For making connections to Unix-domain sockets.
 	# Eventually this has to get properly documented and unified with the TCP-connect methods.
 	# Note how nearly identical this is to EventMachine#connect
-	def EventMachine::connect_unix_domain socketname, handler=nil, *args
-		klass = if (handler and handler.is_a?(Class))
-			handler
-		else
-			Class.new( Connection ) {handler and include handler}
-		end
-
-    arity = klass.instance_method(:initialize).arity
-    expected = arity >= 0 ? arity : -(arity + 1)
-    if (arity >= 0 and args.size != expected) or (arity < 0 and args.size < expected)
-      raise ArgumentError, "wrong number of arguments for #{klass}#initialize (#{args.size} for #{expected})"
-    end
-
-		s = connect_unix_server socketname
-		c = klass.new s, *args
-		@conns[s] = c
-		block_given? and yield c
-		c
+	def EventMachine::connect_unix_domain socketname, *args
+	  connect socketname, *args
 	end
 
 

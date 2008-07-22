@@ -179,7 +179,7 @@ class TestBasic < Test::Unit::TestCase
 	  end
   end
   def test_post_init_error
-	  assert_raise( NameError ) {
+	  assert_raise( EventMachine::ConnectionNotBound ) {
 		  EM.run {
 		  	EM::Timer.new(1) {EM.stop}
 			EM.start_server TestHost, TestPort

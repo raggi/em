@@ -926,15 +926,12 @@ module EventMachine
 	# has no constructor.
 	#
 	def self::defer op, callback = nil
-		@need_threadqueue ||= 0
-		if @need_threadqueue == 0
-			@need_threadqueue = 1
+		unless @threadqueue
 			require 'thread'
 			@threadqueue = Queue.new
 			@resultqueue = Queue.new
 			20.times {|ix|
 				Thread.new {
-					my_ix = ix
 					loop {
 						op,cback = @threadqueue.pop
 						result = op.call

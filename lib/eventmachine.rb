@@ -513,7 +513,16 @@ module EventMachine
   #  }
   #  
   #
-  def EventMachine::start_server server, port, handler=nil, *args, &block
+  def EventMachine::start_server server, port=nil, handler=nil, *args, &block
+    
+    begin
+      port = Integer(port)
+    rescue ArgumentError, TypeError
+      args.unshift handler
+      handler = port
+      port = nil
+    end if port
+    
     klass = if (handler and handler.is_a?(Class))
       handler
     else
@@ -526,7 +535,11 @@ module EventMachine
       raise ArgumentError, "wrong number of arguments for #{klass}#initialize (#{args.size} for #{expected})" 
     end
 
-    s = start_tcp_server server, port
+    s = if port
+          start_tcp_server server, port
+        else
+          start_unix_server server
+        end
     @acceptors[s] = [klass,args,block]
     s
   end
@@ -541,22 +554,8 @@ module EventMachine
 	  EventMachine::stop_tcp_server signature
   end
 
-  def EventMachine::start_unix_domain_server filename, handler=nil, *args, &block
-    klass = if (handler and handler.is_a?(Class))
-      handler
-    else
-      Class.new( Connection ) {handler and include handler}
-    end
-
-    arity = klass.instance_method(:initialize).arity
-    expected = arity >= 0 ? arity : -(arity + 1)
-    if (arity >= 0 and args.size != expected) or (arity < 0 and args.size < expected)
-      raise ArgumentError, "wrong number of arguments for #{klass}#initialize (#{args.size} for #{expected})" 
-    end
-
-    s = start_unix_server filename
-    @acceptors[s] = [klass,args,block]
-    s
+  def EventMachine::start_unix_domain_server filename, *args, &block
+    start_server filename, *args, &block
   end
 
   # EventMachine#connect initiates a TCP connection to a remote

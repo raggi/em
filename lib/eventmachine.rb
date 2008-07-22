@@ -219,7 +219,7 @@ module EventMachine
 		tail and @tails.unshift(tail)
 
 		if reactor_running?
-			(b = blk || block) and next_tick(b)
+			(b = blk || block) and b.call # next_tick(b)
 		else
 			@conns = {}
 			@acceptors = {}
@@ -252,6 +252,23 @@ module EventMachine
 		    EventMachine::stop
 	    }
 	    run(&pr)
+    end
+
+    # fork_reactor forks a new process and calls EM#run inside of it, passing your block.
+    #--
+    # This implementation is subject to change, especially if we clean up the relationship
+    # of EM#run to @reactor_running.
+    # Original patch by Aman Gupta.
+    #
+    def EventMachine::fork_reactor &block
+	    Kernel.fork do
+		    if self.reactor_running?
+			    self.stop_event_loop
+			    self.release_machine
+			    self.instance_variable_set( '@reactor_running', false )
+		    end
+		    self.run block
+	    end
     end
 
 
@@ -539,6 +556,7 @@ module EventMachine
 
     s = start_unix_server filename
     @acceptors[s] = [klass,args,block]
+    s
   end
 
   # EventMachine#connect initiates a TCP connection to a remote

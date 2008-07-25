@@ -1081,7 +1081,7 @@ module EventMachine
 		# It's in original_event_callback, which is dead code.
 		#
 		if opcode == ConnectionData
-			c = @conns[conn_binding] or raise ConnectionNotBound
+			c = @conns[conn_binding] or raise ConnectionNotBound, "received data #{data} for unknown signature: #{conn_binding}"
 			c.receive_data data
 		elsif opcode == ConnectionUnbound
 			if c = @conns.delete( conn_binding )
@@ -1089,7 +1089,7 @@ module EventMachine
 			elsif c = @acceptors.delete( conn_binding )
 				# no-op
 			else
-				raise ConnectionNotBound
+				raise ConnectionNotBound, "recieved ConnectionUnbound for an unknown signature: #{conn_binding}"
 			end
 		elsif opcode == ConnectionAccepted
 			accep,args,blk = @acceptors[conn_binding]
@@ -1099,10 +1099,10 @@ module EventMachine
 			blk and blk.call(c)
 			c # (needed?)
 		elsif opcode == TimerFired
-			t = @timers.delete( data ) or raise UnknownTimerFired
+			t = @timers.delete( data ) or raise UnknownTimerFired, "timer data: #{data}"
 			t.call
 		elsif opcode == ConnectionCompleted
-			c = @conns[conn_binding] or raise ConnectionNotBound
+			c = @conns[conn_binding] or raise ConnectionNotBound, "received ConnectionCompleted for unknown signature: #{conn_binding}"
 			c.connection_completed
 		elsif opcode == LoopbreakSignalled
 			run_deferred_callbacks

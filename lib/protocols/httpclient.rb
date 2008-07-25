@@ -65,6 +65,12 @@ class HttpClient < Connection
   # Refactor this code so that protocol errors all get handled one way (an exception?),
   # instead of sprinkling set_deferred_status :failed calls everywhere.
 
+  # === Arg list
+  # :host => 'ip/dns', :port => fixnum, :verb => 'GET', :request => 'path', 
+  # :basic_auth => {:username => '', :password => ''}, :content => 'content',
+  # :contenttype => 'text/plain', :query_string => '', :host_header => '',
+  # :cookie => ''
+
   def self.request( args = {} )
     args[:port] ||= 80
     EventMachine.connect( args[:host], args[:port], self ) {|c|
@@ -136,6 +142,11 @@ class HttpClient < Connection
     # Eventually we will want to deal intelligently with arrays and hashes.
     if args[:cookie]
       req << "Cookie: #{args[:cookie]}"
+    end
+
+    if args[:basic_auth]
+     basic_auth_string = ["#{args[:basic_auth][:username]}:#{args[:basic_auth][:password]}"].pack('m').strip
+     req << "Authorization: Basic #{basic_auth_string}"
     end
 
     req << ""

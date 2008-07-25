@@ -12,7 +12,7 @@
 # $Id$
 #++
 
-### OLD RAKE: ###
+### OLD RAKE: ###
 # # The tasks and external gemspecs we used to generate binary gems are now
 # # obsolete. Use Patrick Hurley's gembuilder to build binary gems for any
 # # desired platform.

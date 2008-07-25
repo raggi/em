@@ -1584,8 +1584,10 @@ class Connection
 			EventMachine::add_timer @interval, proc {self.fire}
 		end
 		def fire
-			@code.call
-			schedule unless @cancelled
+			unless @cancelled
+				@code.call
+				schedule
+			end
 		end
 		def cancel
 			@cancelled = true

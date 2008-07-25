@@ -84,7 +84,7 @@ class TestTimers < Test::Unit::TestCase
   def test_periodic_timer_cancel
 	  x = 0
 	  EventMachine.run {
-		pt = EventMachine::PeriodicTimer.new(5, proc { x += 1 })
+		pt = EventMachine::PeriodicTimer.new(0.25, proc { x += 1 })
 		pt.cancel
 		EventMachine::Timer.new(0.5) {EventMachine.stop}
 	  }

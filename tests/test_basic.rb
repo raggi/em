@@ -187,7 +187,37 @@ class TestBasic < Test::Unit::TestCase
 		  }
 	  }
   end
-
+  
+  # From ticket #50
+  def test_byte_range_send
+    $received = ''
+    $sent = (0..255).to_a.map{|v|v.chr}.to_s
+    EM::run {
+      srv = Module.new do
+        def receive_data data
+          $received << data
+        end
+        
+        def unbind
+          EM::stop
+        end
+      end
+      
+      cli = Module.new do
+        def post_init
+          send_data $sent
+          close_connection_after_writing
+        end
+      end
+      
+      EM::start_server TestHost, TestPort, srv
+      
+      EM::connect TestHost, TestPort, cli
+      
+      EM::add_timer(0.5) { EM::stop; Kernel.warn "test timed out!" }
+    }
+    assert_equal($sent, $received)
+  end
 
 end
 

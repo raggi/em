@@ -1631,6 +1631,9 @@ module Protocols
 	autoload :SASLauth, 'protocols/saslauth'
 end
 
+# Is inside of protocols/ but not in the namespace?
+autoload :BufferedTokenizer, 'protocols/buftok'
+
 end # module EventMachine
 
 # Save everyone some typing.

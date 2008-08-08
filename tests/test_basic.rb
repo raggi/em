@@ -191,7 +191,7 @@ class TestBasic < Test::Unit::TestCase
   # From ticket #50
   def test_byte_range_send
     $received = ''
-    $sent = (0..255).to_a.map{|v|v.chr}.to_s
+    $sent = (0..255).to_a.pack('C*')
     EM::run {
       srv = Module.new do
         def receive_data data

@@ -33,7 +33,7 @@ if have_func('rb_thread_blocking_region') and have_macro('RB_UBF_DFL', 'ruby.h')
   flags << "-DHAVE_TBR"
 end
 
-# Minor platform details between *nix and Windows:
+# Minor platform details between *nix and Windows:
 
 if RUBY_PLATFORM =~ /(mswin|mingw|bccwin)/
   GNU_CHAIN = true if $1 == 'mingw'
@@ -116,7 +116,7 @@ else
   CONFIG['LDSHARED'] = "$(CXX) -shared"
 end
 
-# OpenSSL:
+# OpenSSL:
 
 OPENSSL_LIBS_HEADS_PLATFORMS = {
   :unix => [%w[ssl crypto], %w[openssl/ssl.h openssl/err.h]],

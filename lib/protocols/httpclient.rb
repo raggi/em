@@ -144,10 +144,11 @@ class HttpClient < Connection
       req << "Cookie: #{args[:cookie]}"
     end
 
+    # Basic-auth stanza contributed by Mike Murphy.
     if args[:basic_auth]
-     basic_auth_string = ["#{args[:basic_auth][:username]}:#{args[:basic_auth][:password]}"].pack('m').strip
-     req << "Authorization: Basic #{basic_auth_string}"
-    end
+      basic_auth_string = ["#{args[:basic_auth][:username]}:#{args[:basic_auth][:password]}"].pack('m').strip
+      req << "Authorization: Basic #{basic_auth_string}"
+    end 
 
     req << ""
     reqstring = req.map {|l| "#{l}\r\n"}.join

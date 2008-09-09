@@ -127,7 +127,9 @@ OPENSSL_LIBS_HEADS_PLATFORMS = {
 }
 
 dc_flags = ['ssl']
+
 dc_flags += ["#{ENV['OPENSSL']}/include", ENV['OPENSSL']] if /linux/ =~ RUBY_PLATFORM
+
 libs, heads = case RUBY_PLATFORM
 when /mswin/    ; OPENSSL_LIBS_HEADS_PLATFORMS[:mswin]
 when /mingw/    ; OPENSSL_LIBS_HEADS_PLATFORMS[:unix]
@@ -140,7 +142,7 @@ dir_config(*dc_flags)
 have_openssl = check_libs(libs) and check_heads(heads)
 flags << "-D #{have_openssl ? "WITH_SSL" : "WITHOUT_SSL"}"
 
-# Finally, seal up flags and write Makefile
+# Finally, seal up flags and write Makefile
 
 if $CPPFLAGS
   $CPPFLAGS += ' ' + flags.join(' ')

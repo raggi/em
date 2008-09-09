@@ -636,6 +636,7 @@ SelectData_t::SelectData_t()
 _SelectDataSelect
 *****************/
 
+#ifdef HAVE_TBR
 static VALUE _SelectDataSelect (void *v)
 {
 	SelectData_t *sd = (SelectData_t*)v;

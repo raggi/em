@@ -104,13 +104,6 @@ when /linux/
 
   # on Unix we need a g++ link, not gcc.
   CONFIG['LDSHARED'] = "$(CXX) -shared"
-
-  # Modify the mkmf constant LINK_SO so the generated shared object is stripped.
-  # You might think modifying CONFIG['LINK_SO'] would be a better way to do this,
-  # but it doesn't work because mkmf doesn't look at CONFIG['LINK_SO'] again after
-  # it initializes.
-  LINK_SO.replace(LINK_SO + "; strip $@")
-  
 else
   # on Unix we need a g++ link, not gcc.
   CONFIG['LDSHARED'] = "$(CXX) -shared"

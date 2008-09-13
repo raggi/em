@@ -59,7 +59,9 @@ when /mswin32/, /mingw32/, /bccwin32/
   check_heads(%w[windows.h winsock.h], true)
   check_libs(%w[kernel32 rpcrt4 gdi32], true)
 
-  unless GNU_CHAIN
+  if GNU_CHAIN
+    CONFIG['LDSHARED'] = "$(CXX) -shared -lstdc++"
+  else
     $defs.push "-EHs"
     $defs.push "-GR"
   end

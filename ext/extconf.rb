@@ -26,45 +26,48 @@ def check_heads heads = [], fatal = false
   heads.all? { |head| have_header(head) || (abort("could not find header: #{head}") if fatal)}
 end
 
+def add_define(name)
+  $defs.push("-D#{name}")
+end
+
 require 'mkmf'
 
-flags = ['-D BUILD_FOR_RUBY']
-if have_func('rb_thread_blocking_region') and have_macro('RB_UBF_DFL', 'ruby.h')
-  flags << "-DHAVE_TBR"
-end
+add_define 'BUILD_FOR_RUBY'
+
+add_define "HAVE_TBR" if have_func('rb_thread_blocking_region') and have_macro('RB_UBF_DFL', 'ruby.h')
 
 # Minor platform details between *nix and Windows:
 
 if RUBY_PLATFORM =~ /(mswin|mingw|bccwin)/
-  GNU_CHAIN = true if $1 == 'mingw'
+  GNU_CHAIN = $1 == 'mingw'
   OS_WIN32 = true
-  flags << "-D OS_WIN32"
+  add_define "OS_WIN32"
 else
   GNU_CHAIN = true
   OS_UNIX = true
-  flags << '-D OS_UNIX'
-  if have_header("sys/event.h") and have_header("sys/queue.h")
-    flags << "-DHAVE_KQUEUE"
-  end
-  check_libs(%w[pthread], true)  
+  add_define 'OS_UNIX'
+  
+  add_define "HAVE_KQUEUE" if have_header("sys/event.h") and have_header("sys/queue.h")
+
+  # check_libs(%w[pthread], true)  
 end
 
 # Main platform invariances:
 
-case RUBY_PLATFORM.split('-',2)[1]
-when 'mswin32', 'mingw32', 'bccwin32'
+case RUBY_PLATFORM
+when /mswin32/, /mingw32/, /bccwin32/
   check_heads(%w[windows.h winsock.h], true)
   check_libs(%w[kernel32 rpcrt4 gdi32], true)
 
   unless GNU_CHAIN
-    flags << "-EHs"
-    flags << "-GR"
+    $defs.push "-EHs"
+    $defs.push "-GR"
   end
 
 when /solaris/
   check_libs(%w[nsl socket], true)
 
-  flags << '-D OS_SOLARIS8'
+  add_define 'OS_SOLARIS8'
 
   # on Unix we need a g++ link, not gcc.
   CONFIG['LDSHARED'] = "$(CXX) -shared"
@@ -91,7 +94,7 @@ when /linux/
 
   # Original epoll test is inadequate because 2.4 kernels have the header
   # but not the code.
-  #flags << '-DHAVE_EPOLL' if have_header('sys/epoll.h')
+  # add_define 'HAVE_EPOLL' if have_header('sys/epoll.h')
   if have_header('sys/epoll.h')
 	  File.open("hasEpollTest.c", "w") {|f|
 		  f.puts "#include <sys/epoll.h>"
@@ -99,7 +102,7 @@ when /linux/
 	  }
 	  (e = system( "gcc hasEpollTest.c -o hasEpollTest " )) and (e = $?.to_i)
 	  `rm -f hasEpollTest.c hasEpollTest`
-	  flags << '-DHAVE_EPOLL' if e == 0
+	  add_define 'HAVE_EPOLL' if e == 0
   end
 
   # on Unix we need a g++ link, not gcc.
@@ -111,36 +114,32 @@ end
 
 # OpenSSL:
 
-OPENSSL_LIBS_HEADS_PLATFORMS = {
-  :unix => [%w[ssl crypto], %w[openssl/ssl.h openssl/err.h]],
-  :darwin => [%w[ssl crypto C], %w[openssl/ssl.h openssl/err.h]],
-  # openbsd and linux:
-  :crypto_hack => [%w[crypto ssl crypto], %w[openssl/ssl.h openssl/err.h]],
-  :mswin => [%w[ssleay32 libeay32], %w[openssl/ssl.h openssl/err.h]],
-}
+def manual_ssl_config
+  ssl_libs_heads_args = {
+    :unix => [%w[ssl crypto], %w[openssl/ssl.h openssl/err.h]],
+    :darwin => [%w[ssl crypto C], %w[openssl/ssl.h openssl/err.h]],
+    # openbsd and linux:
+    :crypto_hack => [%w[crypto ssl crypto], %w[openssl/ssl.h openssl/err.h]],
+    :mswin => [%w[ssleay32 libeay32], %w[openssl/ssl.h openssl/err.h]],
+  }
+  
+  dc_flags = ['ssl']
+  dc_flags += ["#{ENV['OPENSSL']}/include", ENV['OPENSSL']] if /linux/ =~ RUBY_PLATFORM
 
-dc_flags = ['ssl']
-
-dc_flags += ["#{ENV['OPENSSL']}/include", ENV['OPENSSL']] if /linux/ =~ RUBY_PLATFORM
-
-libs, heads = case RUBY_PLATFORM
-when /mswin/    ; OPENSSL_LIBS_HEADS_PLATFORMS[:mswin]
-when /mingw/    ; OPENSSL_LIBS_HEADS_PLATFORMS[:unix]
-when /darwin/   ; OPENSSL_LIBS_HEADS_PLATFORMS[:darwin]
-when /openbsd/  ; OPENSSL_LIBS_HEADS_PLATFORMS[:crypto_hack]
-when /linux/    ; OPENSSL_LIBS_HEADS_PLATFORMS[:crypto_hack]
-else              OPENSSL_LIBS_HEADS_PLATFORMS[:unix]
+  libs, heads = case RUBY_PLATFORM
+  when /mswin/    ; ssl_libs_heads_args[:mswin]
+  when /mingw/    ; ssl_libs_heads_args[:unix]
+  when /darwin/   ; ssl_libs_heads_args[:darwin]
+  when /openbsd/  ; ssl_libs_heads_args[:crypto_hack]
+  when /linux/    ; ssl_libs_heads_args[:crypto_hack]
+  else              ssl_libs_heads_args[:unix]
+  end
+  dir_config(*dc_flags)
+  have_openssl = check_libs(libs) and check_heads(heads)
+  add_define "WITH#{'OUT' unless have_openssl}_SSL"
 end
-dir_config(*dc_flags)
-have_openssl = check_libs(libs) and check_heads(heads)
-flags << "-D #{have_openssl ? "WITH_SSL" : "WITHOUT_SSL"}"
 
-# Finally, seal up flags and write Makefile
-
-if $CPPFLAGS
-  $CPPFLAGS += ' ' + flags.join(' ')
-else
-  $CFLAGS += ' ' + flags.join(' ')
-end
+# Try to use pkg_config first, fixes #73
+manual_ssl_config unless pkg_config('openssl')
 
 create_makefile "rubyeventmachine"

@@ -660,6 +660,7 @@ int SelectData_t::_Select()
 	return EmSelect (maxsocket+1, &fdreads, &fdwrites, NULL, &tv);
 	#endif
 }
+#endif
 
 
 

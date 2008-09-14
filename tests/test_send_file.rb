@@ -37,6 +37,20 @@ class TestSendFile < Test::Unit::TestCase
 			close_connection_after_writing
 		end
 	end
+	
+	module TestClient
+	  def data_to(&blk)
+	    @data_to = blk
+    end
+    
+    def receive_data(data)
+      @data_to.call(data) if @data_to
+    end
+    
+    def unbind
+      EM.stop
+    end
+  end
 
 	TestHost = "0.0.0.0"
 	TestPort = 9055
@@ -54,17 +68,15 @@ class TestSendFile < Test::Unit::TestCase
 			f << ("A" * 5000)
 		}
 
-		data = nil
+		data = ''
 
 		EM.run {
 			EM.start_server TestHost, TestPort, TestModule
 			EM.add_timer(2) {EM.stop} # avoid hanging in case of error
-			EM.defer proc {
-				t = TCPSocket.new TestHost, TestPort
-				data = t.read
-			}, proc {
-				EM.stop
-			}
+			
+			EM.connect TestHost, TestPort, TestClient do |c|
+			  c.data_to { |d| data << d }
+		  end
 		}
 
 		assert_equal( "A" * 5000, data )
@@ -77,19 +89,16 @@ class TestSendFile < Test::Unit::TestCase
 			f << ("A" * 1000000)
 		}
 
-		data = nil
+		data = ''
 
 		ex_class = RUBY_PLATFORM == 'java' ? NativeException : RuntimeError
     assert_raise( ex_class ) {
 			EM.run {
 				EM.start_server TestHost, TestPort, TestModule
 				EM.add_timer(2) {EM.stop} # avoid hanging in case of error
-				EM.defer proc {
-					t = TCPSocket.new TestHost, TestPort
-					data = t.read
-				}, proc {
-					EM.stop
-				}
+  			EM.connect TestHost, TestPort, TestClient do |c|
+  			  c.data_to { |d| data << d }
+  		  end
 			}
 		}
 
@@ -118,17 +127,14 @@ class TestSendFile < Test::Unit::TestCase
 			f << ("A" * 1000)
 		}
 
-		data = nil
+		data = ''
 
 		EM.run {
 			EM.start_server TestHost, TestPort, StreamTestModule
 			EM.add_timer(2) {EM.stop} # avoid hanging in case of error
-			EM.defer proc {
-				t = TCPSocket.new TestHost, TestPort
-				data = t.read
-			}, proc {
-				EM.stop
-			}
+			EM.connect TestHost, TestPort, TestClient do |c|
+			  c.data_to { |d| data << d }
+		  end
 		}
 
 		assert_equal( "A" * 1000, data )
@@ -141,17 +147,14 @@ class TestSendFile < Test::Unit::TestCase
 			f << ("A" * 1000)
 		}
 
-		data = nil
+		data = ''
 
 		EM.run {
 			EM.start_server TestHost, TestPort, ChunkStreamTestModule
 			EM.add_timer(2) {EM.stop} # avoid hanging in case of error
-			EM.defer proc {
-				t = TCPSocket.new TestHost, TestPort
-				data = t.read
-			}, proc {
-				EM.stop
-			}
+			EM.connect TestHost, TestPort, TestClient do |c|
+			  c.data_to { |d| data << d }
+		  end
 		}
 
 		assert_equal( "3e8\r\n#{"A" * 1000}\r\n0\r\n\r\n", data )
@@ -169,16 +172,13 @@ class TestSendFile < Test::Unit::TestCase
 		end
 	end
 	def test_stream_bad_file
-		data = nil
+		data = ''
 		EM.run {
 			EM.start_server TestHost, TestPort, BadFileTestModule
 			EM.add_timer(2) {EM.stop} # avoid hanging in case of error
-			EM.defer proc {
-				t = TCPSocket.new TestHost, TestPort
-				data = t.read
-			}, proc {
-				EM.stop
-			}
+			EM.connect TestHost, TestPort, TestClient do |c|
+			  c.data_to { |d| data << d }
+		  end
 		}
 
 		assert_equal( "file not found", data )
@@ -189,17 +189,14 @@ class TestSendFile < Test::Unit::TestCase
 			f << ("A" * 10000)
 		}
 
-		data = nil
+		data = ''
 
 		EM.run {
 			EM.start_server TestHost, TestPort, StreamTestModule
 			EM.add_timer(2) {EM.stop} # avoid hanging in case of error
-			EM.defer proc {
-				t = TCPSocket.new TestHost, TestPort
-				data = t.read
-			}, proc {
-				EM.stop
-			}
+			EM.connect TestHost, TestPort, TestClient do |c|
+			  c.data_to { |d| data << d }
+		  end
 		}
 
 		assert_equal( "A" * 10000, data )
@@ -212,17 +209,14 @@ class TestSendFile < Test::Unit::TestCase
 			f << ("A" * 100000)
 		}
 
-		data = nil
+		data = ''
 
 		EM.run {
 			EM.start_server TestHost, TestPort, ChunkStreamTestModule
 			EM.add_timer(2) {EM.stop} # avoid hanging in case of error
-			EM.defer proc {
-				t = TCPSocket.new TestHost, TestPort
-				data = t.read
-			}, proc {
-				EM.stop
-			}
+			EM.connect TestHost, TestPort, TestClient do |c|
+			  c.data_to { |d| data << d }
+		  end
 		}
 
 		expected = [

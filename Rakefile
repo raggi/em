@@ -44,7 +44,7 @@ if Gem.path.any? {|path| %r(^#{Regexp.escape path}) =~ __DIR__}
   task :default => :gem_build
 else
   desc "Run tests."
-  task :default => 'test:partial'
+  task :default => :test
 end
 
 desc ":default build when running under rubygems."

@@ -73,10 +73,10 @@ class TestTimers < Test::Unit::TestCase
   def test_periodic_timer
 	  x = 0
 	  EventMachine.run {
-		  EventMachine::PeriodicTimer.new(0.1, proc {
+		  EventMachine::PeriodicTimer.new(0.1) do
 		  	x += 1
-			EventMachine.stop if x == 4
-		  })
+			  EventMachine.stop if x == 4
+	    end
 	  }
 	  assert( x == 4 )
   end
@@ -121,14 +121,20 @@ class TestTimers < Test::Unit::TestCase
 			elsif EM.library_type == :java
 				ten_thousand_timers.call
 			else
-				assert_raise( RuntimeError ) {
-					ten_thousand_timers.call
-				}
+			  begin
+  				assert_raise( RuntimeError ) {
+  					ten_thousand_timers.call
+  				}
+  			rescue Object
+  			  p $!
+  			  assert(false, $!.message)
+  		  end
 			end
 			EM.stop
 		}
 
-		EM.set_max_timers( 10001 )
+    assert(!EM.reactor_running?, 'Reactor running when it should not be.')
+    EM.set_max_timers( 10001 )
 
 		EM.run {
 			ten_thousand_timers.call

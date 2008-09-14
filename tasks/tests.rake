@@ -1,28 +1,18 @@
 # This is used by several rake tasks, that parameterize the
 # behavior so we can use the same tests to test both the
 # extension and non-extension versions.
-def run_tests t, libr, test_filename_filter="test_*.rb"
+def run_tests t, libr = :cascade, test_files="test_*.rb"
   require 'test/unit/testsuite'
   require 'test/unit/ui/console/testrunner'
-
+  require 'tests/testem'
+  
+  base_dir = File.expand_path(File.dirname(__FILE__) + '/../') + '/'
+  
   runner = Test::Unit::UI::Console::TestRunner
-
-  $eventmachine_library = ((RUBY_PLATFORM =~ /java/) ? :java : libr)
-  $LOAD_PATH.unshift('tests')
-  $stderr.puts "Checking for test cases:" #if t.verbose
-
-  if test_filename_filter.is_a?(Array)
-    test_filename_filter.each {|testcase|
-      $stderr.puts "\t#{testcase}"
-      load "tests/#{testcase}"
-    }
-  else
-    Dir["tests/#{test_filename_filter}"].each do |testcase|
-      $stderr.puts "\t#{testcase}" #if t.verbose
-      load testcase
-    end
-  end
-
+  
+  $eventmachine_library = libr
+  EmTestRunner.run(test_files)
+  
   suite = Test::Unit::TestSuite.new($name)
 
   ObjectSpace.each_object(Class) do |testcase|
@@ -34,7 +24,9 @@ end
 
 desc "Run tests for #{Spec.name}."
 task :test do |t|
-  run_tests t, nil
+  # run_tests t
+  # Rake +/ friends leave threads, etc, less stable test runs.
+  ruby '-Ilib -Iext -Ijava tests/testem.rb'
 end
 
 namespace :test do
@@ -52,7 +44,7 @@ namespace :test do
       "test_httpclient2.rb",
       "test_httpclient.rb",
       "test_kb.rb",
-      #"test_ltp2.rb",
+      "test_ltp2.rb",
       "test_ltp.rb",
       "test_next_tick.rb",
       "test_processes.rb",
@@ -66,7 +58,7 @@ namespace :test do
       "test_spawn.rb",
       "test_timers.rb",
       "test_ud.rb",
-    ]
+    ].map { |tf| "tests/#{tf}" }
   end
   
   desc "Run java tests for #$name."
@@ -165,7 +157,7 @@ namespace :test do
 
   desc "Test Spawn"
   task :spawn do |t|
-    run_tests t, :spawn, "test_spawn*.rb"
+    run_tests t, :extension, "test_spawn*.rb"
   end
 
   desc "Test SMTP"

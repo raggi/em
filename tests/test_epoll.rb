@@ -28,19 +28,11 @@
 # the result is a very confusing error message.
 #
 
-$:.unshift "../lib"
 require 'eventmachine'
 require 'test/unit'
 
 
 class TestEpoll < Test::Unit::TestCase
-
-	def setup
-	end
-
-	def teardown
-	end
-
 
 	module TestEchoServer
 		def receive_data data
@@ -101,9 +93,9 @@ class TestEpoll < Test::Unit::TestCase
 		$n = 0
 		EM.epoll
 		EM.run {
-			sleep_proc = proc {sleep 1}
-			return_proc = proc {$n += 1; EM.stop}
-			EM.defer sleep_proc, return_proc
+			work_proc = proc {$n += 1}
+			callback_proc = proc {EM.stop}
+			EM.defer work_proc, callback_proc
 		}
 		assert_equal( 1, $n )
 	end

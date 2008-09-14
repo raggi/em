@@ -17,14 +17,13 @@
 # 
 
 require 'rake/gempackagetask'
-require 'rake/testtask'
 require 'rake/rdoctask'
 require 'rake/clean'
 
 # monkey bitchin' for windows stuffs...
 module FileUtils
-  # If any of these methods ever clobber, try removing them.
-  # Hopefully they'll do something semantically similar.
+  # If any of these methods ever clobber, try removing them.
+  # Hopefully they'll do something semantically similar.
   abort "Err: #{__FILE__}:#{__LINE__} monkey patch windows? clobbers!" unless instance_methods.grep(/windows\?/).empty?
   abort "Err: #{__FILE__}:#{__LINE__} monkey patch sudo clobbers!" unless instance_methods.grep(/sudo/).empty?
   abort "Err: #{__FILE__}:#{__LINE__} monkey patch gem_cmd clobbers!" unless instance_methods.grep(/gem_cmd/).empty?
@@ -51,21 +50,7 @@ Rake::GemPackageTask.new(Spec) do |pkg|
 end
 Rake::Task[:clean].enhance [:clobber_package]
 
-# Test tasks can be made up of spec files or test files, provided you require
-# the right stuff in your test / spec helpers.
-Rake::TestTask.new do |t|
-  t.test_files = FileList['{{spec,specs}/**/*_spec,{test,tests}/**/{test_,tc_}*}.rb'] 
-end
-
-# Use spec/spec_runner for alternative spec framework runners (e.g. bacon).
-if File.exist? 'spec/spec_runner'
-  desc "Run specs using spec runner"
-  task :spec do ruby 'spec/spec_runner' end
-else
-  task :spec => :test
-end
-
-# Only generate rdoc if the spec says so, again, jack the builtins.
+# Only generate rdoc if the spec says so, again, jack the builtins.
 if Spec.has_rdoc
   Rake::RDocTask.new do |rd|
     rd.title = Spec.name

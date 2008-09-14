@@ -1592,6 +1592,7 @@ class Connection
 	#
 	#
 	class EventMachine::PeriodicTimer
+		attr_accessor :interval
 		def initialize *args, &block
 			@interval = args.shift
 			@code = args.shift || block
@@ -1623,10 +1624,10 @@ class Connection
 		end
 	end
 
-
-
-
 end
+
+# Is inside of protocols/ but not in the namespace?
+require 'protocols/buftok'
 
 module Protocols
 	# In this module, we define standard protocol implementations.
@@ -1646,22 +1647,14 @@ module Protocols
 	autoload :SmtpClient, 'protocols/smtpclient'
 	autoload :SmtpServer, 'protocols/smtpserver'
 	autoload :SASLauth, 'protocols/saslauth'
+	
+	#require 'protocols/postgres' UNCOMMENT THIS LINE WHEN THE POSTGRES CODE IS READY FOR PRIME TIME.
 end
-
-# Is inside of protocols/ but not in the namespace?
-require 'protocols/buftok'
 
 end # module EventMachine
 
 # Save everyone some typing.
 EM = EventMachine
 EM::P = EventMachine::Protocols
-
-# At the bottom of this module, we load up protocol handlers that depend on some
-# of the classes defined here. Eventually we should refactor this out so it's
-# laid out in a more logical way.
-#
-
-#require 'protocols/postgres' UNCOMMENT THIS LINE WHEN THE POSTGRES CODE IS READY FOR PRIME TIME.
 
 require 'em/processes'

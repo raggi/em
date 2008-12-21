@@ -1,15 +1,16 @@
-# BufferedTokenizer - Statefully split input data by a specifiable token
-#
-# Authors:: Tony Arcieri, Martin Emde
-#
-#----------------------------------------------------------------------------
-#
-# Copyright (C) 2006-07 by Tony Arcieri and Martin Emde
-# 
-# Distributed under the Ruby license (http://www.ruby-lang.org/en/LICENSE.txt)
-#
-#---------------------------------------------------------------------------
-#
+=begin
+BufferedTokenizer - Statefully split input data by a specifiable token
+
+Authors:: Tony Arcieri, Martin Emde
+
+----------------------------------------------------------------------------
+
+Copyright (C) 2006-07 by Tony Arcieri and Martin Emde
+
+Distributed under the Ruby license (http://www.ruby-lang.org/en/LICENSE.txt)
+
+---------------------------------------------------------------------------
+=end
 
 # (C)2006 Tony Arcieri, Martin Emde
 # Distributed under the Ruby license (http://www.ruby-lang.org/en/LICENSE.txt)

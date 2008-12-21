@@ -1,3 +1,4 @@
+=begin
 # $Id$
 #
 # Author:: Francis Cianfrocca (gmail: blackhedd)
@@ -19,19 +20,16 @@
 # 
 # See the file COPYING for complete licensing information.
 #
-#---------------------------------------------------------------------------
-#
-# 
-
-
-# This module provides "glue" for the Java version of the EventMachine reactor core.
-# For C++ EventMachines, the analogous functionality is found in ext/rubymain.cpp,
-# which is a garden-variety Ruby-extension glue module.
+=end
 
 require 'java'
 require 'em_reactor'
 
 module EventMachine
+  # This module provides "glue" for the Java version of the EventMachine reactor core.
+  # For C++ EventMachines, the analogous functionality is found in ext/rubymain.cpp,
+  # which is a garden-variety Ruby-extension glue module.
+  
 	# TODO: These event numbers are defined in way too many places.
 	# DRY them up.
 	TimerFired = 100

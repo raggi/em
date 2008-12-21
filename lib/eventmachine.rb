@@ -1,77 +1,26 @@
-# $Id$
-#
-# Author:: Francis Cianfrocca (gmail: blackhedd)
-# Homepage::  http://rubyeventmachine.com
-# Date:: 8 Apr 2006
-# 
-# See EventMachine and EventMachine::Connection for documentation and
-# usage examples.
-#
-#----------------------------------------------------------------------------
-#
-# Copyright (C) 2006-07 by Francis Cianfrocca. All Rights Reserved.
-# Gmail: blackhedd
-# 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of either: 1) the GNU General Public License
-# as published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version; or 2) Ruby's License.
-# 
-# See the file COPYING for complete licensing information.
-#
-#---------------------------------------------------------------------------
-#
-# 
+=begin
+$Id$
 
+Author:: Francis Cianfrocca (gmail: blackhedd)
+Homepage::  http://rubyeventmachine.com
+Date:: 8 Apr 2006
 
-#-- Select in a library based on a global variable.
-# PROVISIONALLY commented out this whole mechanism which selects
-# a pure-Ruby EM implementation if the extension is not available.
-# I expect this will cause a lot of people's code to break, as it
-# exposes misconfigurations and path problems that were masked up
-# till now. The reason I'm disabling it is because the pure-Ruby
-# code will have problems of its own, and it's not nearly as fast
-# anyway. Suggested by a problem report from Moshe Litvin. 05Jun07.
-#
-# 05Dec07: Re-enabled the pure-ruby mechanism, but without the automatic
-# fallback feature that tripped up Moshe Litvin. We shouldn't fail over to
-# the pure Ruby version because it's possible that the user intended to
-# run the extension but failed to do so because of a compilation or
-# similar error. So we require either a global variable or an environment
-# string be set in order to select the pure-Ruby version.
-#
+See EventMachine and EventMachine::Connection for documentation and
+usage examples.
 
+----------------------------------------------------------------------------
 
-unless defined?($eventmachine_library)
-  $eventmachine_library = ENV['EVENTMACHINE_LIBRARY'] || :cascade
-end
-$eventmachine_library = $eventmachine_library.to_sym
+Copyright (C) 2006-07 by Francis Cianfrocca. All Rights Reserved.
+Gmail: blackhedd
 
-case $eventmachine_library
-when :pure_ruby
-  require 'pr_eventmachine'
-when :extension
-  require 'rubyeventmachine'
-when :java
-  require 'jeventmachine'
-else # :cascade
-  # This is the case that most user code will take.
-  # Prefer the extension if available.
-  begin
-    if RUBY_PLATFORM =~ /java/
-      require 'java'
-      require 'jeventmachine'
-      $eventmachine_library = :java
-    else
-      require 'rubyeventmachine'
-      $eventmachine_library = :extension
-    end
-  rescue LoadError
-    warn "# EventMachine fell back to pure ruby mode" if $DEBUG
-    require 'pr_eventmachine'
-    $eventmachine_library = :pure_ruby
-  end
-end
+This program is free software; you can redistribute it and/or modify
+it under the terms of either: 1) the GNU General Public License
+as published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version; or 2) Ruby's License.
+
+See the file COPYING for complete licensing information.
+
+=end
 
 require "eventmachine_version"
 require 'em/deferrable'
@@ -83,27 +32,24 @@ require 'em/spawnable'
 
 require 'shellwords'
 
-#-- Additional requires are at the BOTTOM of this file, because they
-#-- depend on stuff defined in here. Refactor that someday.
-
-
-
-# == Introduction
-# EventMachine provides a fast, lightweight framework for implementing
-# Ruby programs that can use the network to communicate with other
-# processes. Using EventMachine, Ruby programmers can easily connect
-# to remote servers and act as servers themselves. EventMachine does not
-# supplant the Ruby IP libraries. It does provide an alternate technique
-# for those applications requiring better performance, scalability,
-# and discipline over the behavior of network sockets, than is easily
-# obtainable using the built-in libraries, especially in applications
-# which are structurally well-suited for the event-driven programming model.
+# = EventMachine
 #
-# EventMachine provides a perpetual event-loop which your programs can
-# start and stop. Within the event loop, TCP network connections are
-# initiated and accepted, based on EventMachine methods called by your
-# program. You also define callback methods which are called by EventMachine
-# when events of interest occur within the event-loop.
+# == Introduction
+# EventMachine provides a fast, lightweight framework for implementing Ruby
+# programs that can use the network to communicate with other processes. Using
+# EventMachine, Ruby programmers can easily connect to remote servers and act
+# as servers themselves. EventMachine does not supplant the Ruby IP libraries.
+# It does provide an alternate technique for those applications requiring
+# better performance, scalability, and discipline over the behavior of network
+# sockets, than is easily obtainable using the built-in libraries, especially
+# in applications which are structurally well-suited for the event-driven
+# programming model.
+#
+# EventMachine provides a perpetual event-loop which your programs can start
+# and stop. Within the event loop, TCP network connections are initiated and
+# accepted, based on EventMachine methods called by your program. You also
+# define callback methods which are called by EventMachine when events of
+# interest occur within the event-loop.
 #
 # User programs will be called back when the following events occur:
 # * When the event loop accepts network connections from remote peers
@@ -130,30 +76,30 @@ require 'shellwords'
 #       }
 # 
 # What's going on here? Well, we have defined the module EchoServer to
-# implement the semantics of the echo protocol (more about that shortly).
-# The last three lines invoke the event-machine itself, which runs forever
-# unless one of your callbacks terminates it. The block that you supply
-# to EventMachine::run contains code that runs immediately after the event
-# machine is initialized and before it starts looping. This is the place
-# to open up a TCP server by specifying the address and port it will listen
-# on, together with the module that will process the data.
-# 
-# Our EchoServer is extremely simple as the echo protocol doesn't require
-# much work. Basically you want to send back to the remote peer whatever
-# data it sends you. We'll dress it up with a little extra text to make it
+# implement the semantics of the echo protocol (more about that shortly). The
+# last three lines invoke the event-machine itself, which runs forever unless
+# one of your callbacks terminates it. The block that you supply to
+# EventMachine::run contains code that runs immediately after the event
+# machine is initialized and before it starts looping. This is the place to
+# open up a TCP server by specifying the address and port it will listen on,
+# together with the module that will process the data.
+#
+# Our EchoServer is extremely simple as the echo protocol doesn't require much
+# work. Basically you want to send back to the remote peer whatever data it
+# sends you. We'll dress it up with a little extra text to make it
 # interesting. Also, we'll close the connection in case the received data
 # contains the word "quit."
-# 
+#
 # So what about this module EchoServer? Well, whenever a network connection
-# (either a client or a server) starts up, EventMachine instantiates an anonymous
-# class, that your module has been mixed into. Exactly one of these class
-# instances is created for each connection. Whenever an event occurs on a
-# given connection, its corresponding object automatically calls specific
+# (either a client or a server) starts up, EventMachine instantiates an
+# anonymous class, that your module has been mixed into. Exactly one of these
+# class instances is created for each connection. Whenever an event occurs on
+# a given connection, its corresponding object automatically calls specific
 # instance methods which your module may redefine. The code in your module
 # always runs in the context of a class instance, so you can create instance
-# variables as you wish and they will be carried over to other callbacks
-# made on that same connection.
-# 
+# variables as you wish and they will be carried over to other callbacks made
+# on that same connection.
+#
 # Looking back up at EchoServer, you can see that we've defined the method
 # receive_data which (big surprise) is called whenever data has been received
 # from the remote end of the connection. Very simple. We get the data
@@ -164,14 +110,48 @@ require 'shellwords'
 # (Notice that closing the connection doesn't terminate the processing loop,
 # or change the fact that your echo server is still accepting connections!) 
 #
-#
 # == Questions and Futures
-# Would it be useful for EventMachine to incorporate the Observer pattern
-# and make use of the corresponding Ruby <tt>observer</tt> package?
-# Interesting thought.
+# Would it be useful for EventMachine to incorporate the Observer pattern and
+# make use of the corresponding Ruby <tt>observer</tt> package? Interesting
+# thought.
 #
-# 
 module EventMachine
+  
+  unless defined?($eventmachine_library)
+    $eventmachine_library = ENV['EVENTMACHINE_LIBRARY'] || :cascade
+  end
+  $eventmachine_library = $eventmachine_library.to_sym
+
+  case $eventmachine_library
+  when :pure_ruby
+    require 'pr_eventmachine'
+  when :extension
+    require 'rubyeventmachine'
+  when :java
+    require 'jeventmachine'
+  else # :cascade
+    # This is the case that most user code will take.
+    # Prefer the extension if available.
+    begin
+      if RUBY_PLATFORM =~ /java/
+        require 'java'
+        require 'jeventmachine'
+        $eventmachine_library = :java
+      else
+        require 'rubyeventmachine'
+        $eventmachine_library = :extension
+      end
+    rescue LoadError
+      warn "# EventMachine fell back to pure ruby mode" if $DEBUG
+      require 'pr_eventmachine'
+      $eventmachine_library = :pure_ruby
+    end
+  end
+  
+  def self.library
+    $eventmachine_library
+  end
+  
   class FileNotFoundException < Exception; end
   
   class << self

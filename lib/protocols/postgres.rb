@@ -1,92 +1,24 @@
-#
-# $Id$
-#
-# Author:: Francis Cianfrocca (gmail: blackhedd)
-# Homepage::  http://rubyeventmachine.com
-# Date:: 15 November 2006
-# 
-# See EventMachine and EventMachine::Connection for documentation and
-# usage examples.
-#
-#----------------------------------------------------------------------------
-#
-# Copyright (C) 2006-08 by Francis Cianfrocca. All Rights Reserved.
-# Gmail: blackhedd
-# 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of either: 1) the GNU General Public License
-# as published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version; or 2) Ruby's License.
-# 
-# See the file COPYING for complete licensing information.
-#
-#---------------------------------------------------------------------------
-#
-# 
-# 
-
-
 =begin
-PROVISIONAL IMPLEMENTATION of an evented Postgres client.
-This implements version 3 of the Postgres wire protocol, which will work
-with any Postgres version from roughly 7.4 onward.
+$Id$
 
-Until this code is judged ready for prime time, you have to access it by
-explicitly requiring protocols/postgres.
+Author:: Francis Cianfrocca (gmail: blackhedd)
+Homepage::  http://rubyeventmachine.com
+Date:: 15 November 2006
 
-Objective: we want to access Postgres databases without requiring threads.
-Until now this has been a problem because the Postgres client implementations 
-have all made use of blocking I/O calls, which is incompatible with a
-thread-free evented model.
+See EventMachine and EventMachine::Connection for documentation and
+usage examples.
 
-But rather than re-implement the Postgres Wire3 protocol, we're taking advantage
-of the existing postgres-pr library, which was originally written by Michael
-Neumann but (at this writing) appears to be no longer maintained. Still, it's
-in basically a production-ready state, and the wire protocol isn't that complicated
-anyway.
+----------------------------------------------------------------------------
 
-We need to monkeypatch StringIO because it lacks the #readbytes method needed
-by postgres-pr.
+Copyright (C) 2006-08 by Francis Cianfrocca. All Rights Reserved.
+Gmail: blackhedd
 
-We're tucking in a bunch of require statements that may not be present in garden-variety
-EM installations. Until we find a good way to only require these if a program
-requires postgres, this file will need to be required explicitly.
+This program is free software; you can redistribute it and/or modify
+it under the terms of either: 1) the GNU General Public License
+as published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version; or 2) Ruby's License.
 
-The StringIO monkeypatch is lifted verbatim from the standard library readbytes.rb,
-which adds method #readbytes directly to class IO. But StringIO is not a subclass of IO.
-
-We cloned the handling of postgres messages from lib/postgres-pr/connection.rb
-in the postgres-pr library, and modified it for event-handling.
-
-TODO: The password handling in dispatch_conn_message is totally incomplete.
-
-
-We return Deferrables from the user-level operations surfaced by this interface.
-Experimentally, we're using the pattern of always returning a boolean value as the
-first argument of a deferrable callback to indicate success or failure. This is
-instead of the traditional pattern of calling Deferrable#succeed or #fail, and
-requiring the user to define both a callback and an errback function.
-
-Sample code:
-require 'eventmachine'
-require 'protocols/postgres' # provisionally needed
-
-EM.run {
-	db = EM.connect_unix_domain( "/tmp/.s.PGSQL.5432", EM::P::Postgres3 )
-	db.connect( dbname, username, psw ).callback do |status|
-		if status
-			db.query( "select * from some_table" ).callback do |status, result, errors|
-				if status
-					result.rows.each do |row|
-						p row
-					end
-				end
-			end
-		end
-	end
-}
-
-
+See the file COPYING for complete licensing information.
 
 =end
 
@@ -118,7 +50,68 @@ class StringIO
 end
 
 
-module EventMachine; module Protocols; class Postgres3 < EventMachine::Connection
+module EventMachine; module Protocols
+  
+  # PROVISIONAL IMPLEMENTATION of an evented Postgres client.
+  # This implements version 3 of the Postgres wire protocol, which will work
+  # with any Postgres version from roughly 7.4 onward.
+  # 
+  # Until this code is judged ready for prime time, you have to access it by
+  # explicitly requiring protocols/postgres.
+  # 
+  # Objective: we want to access Postgres databases without requiring threads.
+  # Until now this has been a problem because the Postgres client implementations 
+  # have all made use of blocking I/O calls, which is incompatible with a
+  # thread-free evented model.
+  # 
+  # But rather than re-implement the Postgres Wire3 protocol, we're taking advantage
+  # of the existing postgres-pr library, which was originally written by Michael
+  # Neumann but (at this writing) appears to be no longer maintained. Still, it's
+  # in basically a production-ready state, and the wire protocol isn't that complicated
+  # anyway.
+  # 
+  # We need to monkeypatch StringIO because it lacks the #readbytes method needed
+  # by postgres-pr.
+  # 
+  # We're tucking in a bunch of require statements that may not be present in garden-variety
+  # EM installations. Until we find a good way to only require these if a program
+  # requires postgres, this file will need to be required explicitly.
+  # 
+  # The StringIO monkeypatch is lifted verbatim from the standard library readbytes.rb,
+  # which adds method #readbytes directly to class IO. But StringIO is not a subclass of IO.
+  # 
+  # We cloned the handling of postgres messages from lib/postgres-pr/connection.rb
+  # in the postgres-pr library, and modified it for event-handling.
+  # 
+  # TODO: The password handling in dispatch_conn_message is totally incomplete.
+  # 
+  # 
+  # We return Deferrables from the user-level operations surfaced by this interface.
+  # Experimentally, we're using the pattern of always returning a boolean value as the
+  # first argument of a deferrable callback to indicate success or failure. This is
+  # instead of the traditional pattern of calling Deferrable#succeed or #fail, and
+  # requiring the user to define both a callback and an errback function.
+  # 
+  # Sample code:
+  #   require 'eventmachine'
+  #   require 'protocols/postgres' # provisionally needed
+  #     
+  #   EM.run {
+  #     db = EM.connect_unix_domain( "/tmp/.s.PGSQL.5432", EM::P::Postgres3 )
+  #     db.connect( dbname, username, psw ).callback do |status|
+  #       if status
+  #         db.query( "select * from some_table" ).callback do |status, result, errors|
+  #           if status
+  #             result.rows.each do |row|
+  #               p row
+  #             end
+  #           end
+  #         end
+  #       end
+  #     end
+  #   }
+  #
+  class Postgres3 < EventMachine::Connection
 
 
 	def initialize
